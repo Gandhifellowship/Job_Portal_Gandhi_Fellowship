@@ -35,6 +35,23 @@ interface AdminColumn {
   order_index?: number;
 }
 
+const defaultAdminColumns: AdminColumn[] = [
+  { id: 'full_name', name: 'Full Name', type: 'text', order_index: 1 },
+  { id: 'batch', name: 'Batch', type: 'text', order_index: 2 },
+  { id: 'gender', name: 'Gender', type: 'dropdown', order_index: 3, options: [{ value: 'Male', color: '' }, { value: 'Female', color: '' }, { value: 'Other', color: '' }, { value: 'Prefer not to say', color: '' }] },
+  { id: 'email_official', name: 'Email Address Official', type: 'text', order_index: 4 },
+  { id: 'email_personal', name: 'Email Address Personal', type: 'text', order_index: 5 },
+  { id: 'phone_number', name: 'Phone Number', type: 'text', order_index: 6 },
+  { id: 'big_bet', name: 'Big Bet', type: 'text', order_index: 7 },
+  { id: 'fellowship_state', name: 'Fellowship State', type: 'text', order_index: 8 },
+  { id: 'home_state', name: 'Home State', type: 'text', order_index: 9 },
+  { id: 'fpc_name', name: 'FPC Name', type: 'text', order_index: 10 },
+  { id: 'state_spoc_name', name: 'State SPOC name', type: 'text', order_index: 11 },
+  { id: 'reference_number', name: 'Reference Number', type: 'text', order_index: 12 },
+  { id: 'resume_url', name: 'Resume', type: 'text', order_index: 13 },
+  { id: 'applied_at', name: 'Applied At', type: 'text', order_index: 14 },
+];
+
 export const useApplicationGrid = () => {
   const [adminColumns, setAdminColumns] = useState<AdminColumn[]>([]);
   const [loading, setLoading] = useState(true);
@@ -67,7 +84,7 @@ export const useApplicationGrid = () => {
 
       if (error) throw error;
 
-      const columns: AdminColumn[] = (data || []).map(col => ({
+      const mapped = (data || []).map(col => ({
         id: col.id,
         name: col.display_name || col.name,
         display_name: col.display_name,
@@ -79,10 +96,10 @@ export const useApplicationGrid = () => {
         show_in_form: col.show_in_form,
         order_index: col.order_index
       }));
-
-      setAdminColumns(columns);
+      setAdminColumns(mapped.length > 0 ? mapped : defaultAdminColumns);
     } catch (error) {
       console.error('Failed to fetch columns:', error);
+      setAdminColumns(defaultAdminColumns);
     } finally {
       setLoading(false);
     }
