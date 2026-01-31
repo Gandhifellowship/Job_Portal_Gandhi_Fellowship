@@ -96,6 +96,8 @@ export default function AdminDashboard() {
   const [applicationFilters, setApplicationFilters] = useState({
     positions: [] as string[],
     applicantName: '',
+    searchByFields: '', // Batch, Phone, Fellowship State, Home State, Big Bet
+    gender: [] as string[],
     customFields: {} as Record<string, string[]> // Dynamic custom field filters
   });
   const [appSortBy, setAppSortBy] = useState<'date' | 'name' | 'position'>('date');
@@ -565,6 +567,25 @@ export default function AdminDashboard() {
       if (applicationFilters.applicantName && !app.full_name.toLowerCase().includes(applicationFilters.applicantName.toLowerCase())) {
         return false;
       }
+      // Filter by Gender (default dropdown)
+      if (applicationFilters.gender.length > 0) {
+        const appGender = (app as Application & { gender?: string }).gender ?? '';
+        const sel = applicationFilters.gender;
+        const showBlank = sel.includes('__BLANK__') && !String(appGender).trim();
+        const showMatch = sel.filter(v => v !== '__BLANK__').includes(appGender);
+        if (!showBlank && !showMatch) return false;
+      }
+      // Search across Batch, Phone, Fellowship State, Home State, Big Bet
+      if (applicationFilters.searchByFields.trim()) {
+        const q = applicationFilters.searchByFields.toLowerCase().trim();
+        const batch = (app as Application & { batch?: string }).batch ?? '';
+        const phone = (app as Application & { phone_number?: string }).phone_number ?? '';
+        const fellowshipState = (app as Application & { fellowship_state?: string }).fellowship_state ?? '';
+        const homeState = (app as Application & { home_state?: string }).home_state ?? '';
+        const bigBet = (app as Application & { big_bet?: string }).big_bet ?? '';
+        const matches = [batch, phone, fellowshipState, homeState, bigBet].some(f => f && String(f).toLowerCase().includes(q));
+        if (!matches) return false;
+      }
     // Filter by custom fields (dynamic)
     for (const [fieldId, selectedValues] of Object.entries(applicationFilters.customFields)) {
       if (selectedValues.length > 0) {
@@ -625,6 +646,14 @@ export default function AdminDashboard() {
     label: title,
     value: title
   }));
+
+  const genderOptions: MultiSelectOption[] = [
+    { label: 'Blank (Not Assigned)', value: '__BLANK__' },
+    { label: 'Male', value: 'Male' },
+    { label: 'Female', value: 'Female' },
+    { label: 'Other', value: 'Other' },
+    { label: 'Prefer not to say', value: 'Prefer not to say' }
+  ];
 
   // Toggle cover letter expansion
   const toggleCoverLetter = (applicationId: string) => {
@@ -971,6 +1000,25 @@ export default function AdminDashboard() {
                   maxDisplay={1}
                 />
 
+                {/* Gender Filter */}
+                <MultiSelect
+                  options={genderOptions}
+                  selected={applicationFilters.gender}
+                  onChange={(selected) => setApplicationFilters(prev => ({ ...prev, gender: selected }))}
+                  placeholder="All Genders"
+                  maxDisplay={1}
+                />
+
+                {/* Search: Batch, Phone, States, Big Bet */}
+                <div className="relative min-w-[200px] max-w-[280px]">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Input
+                    placeholder="Search batch, phone, states, big bet..."
+                    value={applicationFilters.searchByFields}
+                    onChange={(e) => setApplicationFilters(prev => ({ ...prev, searchByFields: e.target.value }))}
+                    className="pl-10"
+                  />
+                </div>
 
                 {/* Dynamic Custom Field Filters */}
                 {adminColumns
@@ -1017,7 +1065,7 @@ export default function AdminDashboard() {
                 </select>
               </div>
               
-              {(applicationFilters.positions.length > 0 || applicationFilters.applicantName || Object.values(applicationFilters.customFields).some(values => values.length > 0)) && (
+              {(applicationFilters.positions.length > 0 || applicationFilters.applicantName || applicationFilters.gender.length > 0 || applicationFilters.searchByFields.trim() || Object.values(applicationFilters.customFields).some(values => values.length > 0)) && (
                 <div className="mt-3 flex items-center gap-2">
                   <span className="text-sm text-muted-foreground">Active filters:</span>
                   {applicationFilters.positions.map(position => (
@@ -1030,7 +1078,16 @@ export default function AdminDashboard() {
                       Name: {applicationFilters.applicantName}
                     </Badge>
                   )}
-                  {/* Custom Field Active Filters */}
+                  {applicationFilters.gender.length > 0 && applicationFilters.gender.map(v => (
+                    <Badge key={v} variant="secondary" className="text-xs">
+                      Gender: {v === '__BLANK__' ? 'Blank' : v}
+                    </Badge>
+                  ))}
+                  {applicationFilters.searchByFields.trim() && (
+                    <Badge variant="secondary" className="text-xs">
+                      Search: {applicationFilters.searchByFields}
+                    </Badge>
+                  )}
                   {Object.entries(applicationFilters.customFields).map(([fieldId, selectedValues]) => {
                     const column = adminColumns.find(col => col.id === fieldId);
                     return selectedValues.map(value => (
@@ -1045,6 +1102,8 @@ export default function AdminDashboard() {
                     onClick={() => setApplicationFilters({ 
                       positions: [], 
                       applicantName: '',
+                      searchByFields: '',
+                      gender: [],
                       customFields: {}
                     })}
                     className="text-xs text-primary-600 hover:text-primary-700"
