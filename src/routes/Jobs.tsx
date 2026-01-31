@@ -149,13 +149,13 @@ export default function Jobs() {
               />
             </div>
             <select
-              value={departmentFilter}
-              onChange={(e) => setDepartmentFilter(e.target.value)}
+              value={domainFilter}
+              onChange={(e) => setDomainFilter(e.target.value)}
               className="px-3 py-2 border rounded-md bg-background"
             >
-              <option value="">All Departments</option>
-              {departments.map(dept => (
-                <option key={dept} value={dept}>{dept}</option>
+              <option value="">All Domains</option>
+              {domains.map(domain => (
+                <option key={domain} value={domain}>{domain}</option>
               ))}
             </select>
           </div>

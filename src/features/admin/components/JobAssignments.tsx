@@ -21,8 +21,9 @@ interface UserWithDetails {
 
 interface Job {
   id: string;
-  title: string;
-  department: string;
+  position: string;
+  domain: string;
+  organisation_name: string;
   location: string;
   status: string;
 }
@@ -100,9 +101,9 @@ export function JobAssignments() {
     try {
       const { data, error } = await supabase
         .from('jobs')
-        .select('id, title, department, location, status')
+        .select('id, position, domain, organisation_name, location, status')
         .eq('status', 'active')
-        .order('title');
+        .order('position');
       
       if (error) throw error;
       setJobs(data || []);
@@ -400,7 +401,7 @@ export function JobAssignments() {
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                 <Input
                   id="job-search"
-                  placeholder="Job title or department..."
+                  placeholder="Job title or domain..."
                   value={jobSearch}
                   onChange={(e) => setJobSearch(e.target.value)}
                   className="pl-10"
@@ -409,12 +410,12 @@ export function JobAssignments() {
             </div>
             
             <div>
-              <Label htmlFor="department-search">Search by Department</Label>
+              <Label htmlFor="department-search">Search by Domain</Label>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                 <Input
                   id="department-search"
-                  placeholder="Search by department..."
+                  placeholder="Search by domain..."
                   value={departmentFilter}
                   onChange={(e) => setDepartmentFilter(e.target.value)}
                   className="pl-10"
