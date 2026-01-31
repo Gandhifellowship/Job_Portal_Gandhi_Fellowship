@@ -48,7 +48,7 @@ interface AdminColumn {
   name: string;
   type: string;
   is_custom: boolean;
-  options?: Array<{ value: string }>;
+  options?: Array<{ value: string; color?: string }>;
 }
 
 interface ApplicationCardProps {
@@ -167,7 +167,9 @@ const ApplicationCard: React.FC<ApplicationCardProps> = ({
   // Helper function to render dropdown field
   const renderDropdownField = (column: AdminColumn, currentValue: string) => {
     const displayValue = isEditing ? (editFields[column.id] !== undefined ? editFields[column.id] : currentValue) : currentValue;
-    
+    const option = column.options?.find(opt => opt.value === displayValue);
+    const optionColor = option?.color;
+
     return (
     <div key={column.id} className="flex items-center justify-between p-2 bg-muted/50 rounded min-w-0">
       <div className="min-w-0 flex-1">
@@ -179,14 +181,17 @@ const ApplicationCard: React.FC<ApplicationCardProps> = ({
             className="w-full mt-1 px-2 py-1 border rounded text-sm bg-background"
           >
             <option value="">Select {column.name}</option>
-            {column.options?.map(option => (
-              <option key={option.value} value={option.value}>
-                {option.value}
+            {column.options?.map(opt => (
+              <option key={opt.value} value={opt.value}>
+                {opt.value}
               </option>
             ))}
           </select>
         ) : (
-          <p className="text-sm text-muted-foreground mt-1">
+          <p
+            className={`text-sm mt-1 px-2 py-1 rounded inline-block min-w-0 ${optionColor ? 'text-foreground' : 'text-muted-foreground'}`}
+            style={optionColor ? { backgroundColor: optionColor } : undefined}
+          >
             {displayValue || 'Not assigned'}
           </p>
         )}
