@@ -207,6 +207,8 @@ export const useApplicationGrid = () => {
         .from('admin_column_definitions')
         .insert({
           id: newColumnId,
+          name: column.name,
+          type: column.type,
           display_name: column.name,
           data_type: column.type,
           options: column.options,
@@ -259,10 +261,11 @@ export const useApplicationGrid = () => {
       const { error } = await supabase
         .from('admin_column_definitions')
         .update({
+          name: updates.name,
+          type: updates.type,
           display_name: updates.name,
           data_type: updates.type,
           options: updates.options,
-          // Preserve existing order_index and width
           order_index: currentColumn?.order_index,
           width: currentColumn?.width
         })
