@@ -189,8 +189,8 @@ export default function Jobs() {
         {/* Jobs Grid */}
         <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
           {sortedJobs.map((job) => (
-            <Card key={job.id} className="group hover:shadow-2xl transition-all duration-300 border border-primary-100 bg-white">
-              <CardHeader className="pb-4">
+            <Card key={job.id} className="group hover:shadow-2xl transition-all duration-300 border border-primary-100 bg-white flex flex-col h-full">
+              <CardHeader className="pb-4 flex-shrink-0">
                 <div className="flex justify-between items-start">
                   <div className="flex-1">
                     <CardTitle className="text-xl mb-3 text-primary-700 group-hover:text-secondary-600 transition-colors duration-300">
@@ -200,7 +200,7 @@ export default function Jobs() {
                       <div className="h-5 w-5 rounded-md bg-gradient-to-br from-primary-500 to-primary-400 flex items-center justify-center">
                         <Building className="h-3 w-3 text-white" />
                       </div>
-                      {job.organisation_name} � {job.domain}
+                      {job.organisation_name} • {job.domain}
                     </CardDescription>
                     <CardDescription className="flex items-center gap-2 text-primary-600">
                       <div className="h-5 w-5 rounded-md bg-gradient-to-br from-secondary-500 to-secondary-400 flex items-center justify-center">
@@ -214,13 +214,13 @@ export default function Jobs() {
                   </Badge>
                 </div>
               </CardHeader>
-              <CardContent className="pt-0">
+              <CardContent className="pt-0 flex flex-col flex-1 min-h-0">
                 {job.job_description && (
-                  <p className="text-primary-600 mb-6 line-clamp-3 leading-relaxed">
+                  <p className="text-primary-600 mb-4 line-clamp-3 leading-relaxed flex-1 min-h-0">
                     {job.job_description}
                   </p>
                 )}
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between mt-auto pt-4">
                   <div className="flex items-center gap-2 text-sm text-primary-500">
                     <div className="h-4 w-4 rounded bg-gradient-to-br from-accent-400 to-accent-500 flex items-center justify-center">
                       <Calendar className="h-2.5 w-2.5 text-white" />
