@@ -4,11 +4,9 @@ import formidable from 'formidable';
 import fs from 'fs';
 import { emailTemplates } from './email-templates.js';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-
 // Create admin client with service role key (bypasses RLS)
 const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.VITE_SUPABASE_URL || '',
+  process.env.VITE_SUPABASE_URL || '',
   process.env.SUPABASE_SERVICE_ROLE_KEY || ''
 );
 
@@ -33,20 +31,16 @@ export default async function handler(req: { method: string; url: string; body: 
 
   console.log('POST request processing...');
 
-  // Validate environment variables first
+  // Validate required environment variables
   try {
     console.log('Checking environment variables...');
-    if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
-      console.error('Missing NEXT_PUBLIC_SUPABASE_URL');
+    if (!process.env.VITE_SUPABASE_URL) {
+      console.error('Missing VITE_SUPABASE_URL');
       return res.status(500).json({ error: 'Server configuration error: Missing Supabase URL' });
     }
     if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
       console.error('Missing SUPABASE_SERVICE_ROLE_KEY');
       return res.status(500).json({ error: 'Server configuration error: Missing Service Role Key' });
-    }
-    if (!process.env.RESEND_API_KEY) {
-      console.error('Missing RESEND_API_KEY');
-      return res.status(500).json({ error: 'Server configuration error: Missing Resend API Key' });
     }
     console.log('Environment variables validated successfully');
   } catch (envError) {
@@ -272,54 +266,54 @@ export default async function handler(req: { method: string; url: string; body: 
 
     console.log('Application inserted successfully:', insertedApplication);
 
-    // Send email notification
-    console.log('Sending email notification...');
-    console.log('Resend API key present:', !!process.env.RESEND_API_KEY);
-    console.log('Resend API key length:', process.env.RESEND_API_KEY?.length || 0);
-    
-    // Use shared email template for admin notification
-    const adminEmail = process.env.ADMIN_EMAIL || process.env.NEXT_PUBLIC_ADMIN_EMAIL || '';
-    const adminEmailTemplate = emailTemplates.adminNotification({
-      candidate_name: applicationData.full_name,
-      reference_number: insertedApplication.reference_number,
-      job_title: job.position,
-      job_department: job.organisation_name,
-      job_location: job.location,
-      admin_email: adminEmail
-    });
+    // Send email notification only if Resend is configured (optional)
+    let emailSent = false;
+    if (process.env.RESEND_API_KEY) {
+      const adminEmail = process.env.ADMIN_EMAIL || process.env.NEXT_PUBLIC_ADMIN_EMAIL || '';
+      const recipientEmails = process.env.ADMIN_EMAILS
+        ? process.env.ADMIN_EMAILS.split(',').map(e => e.trim())
+        : adminEmail ? [adminEmail] : [];
 
-    const fromEmail = process.env.FROM_EMAIL || process.env.NEXT_PUBLIC_FROM_EMAIL || 'noreply@example.com';
-    const recipientEmails = process.env.ADMIN_EMAILS 
-      ? process.env.ADMIN_EMAILS.split(',').map(e => e.trim())
-      : adminEmail ? [adminEmail] : [];
+      if (recipientEmails.length > 0) {
+        const resend = new Resend(process.env.RESEND_API_KEY);
+        const adminEmailTemplate = emailTemplates.adminNotification({
+          candidate_name: applicationData.full_name,
+          reference_number: insertedApplication.reference_number,
+          job_title: job.position,
+          job_department: job.organisation_name,
+          job_location: job.location,
+          admin_email: adminEmail
+        });
 
-    const emailData = {
-      from: fromEmail,
-      to: recipientEmails,
-      subject: adminEmailTemplate.subject,
-      html: adminEmailTemplate.html,
-    };
-    
-    console.log('Email data prepared:', { to: emailData.to, subject: emailData.subject });
-    
-    const { data, error } = await resend.emails.send(emailData);
+        const fromEmail = process.env.FROM_EMAIL || process.env.NEXT_PUBLIC_FROM_EMAIL || 'noreply@example.com';
+        const emailData = {
+          from: fromEmail,
+          to: recipientEmails,
+          subject: adminEmailTemplate.subject,
+          html: adminEmailTemplate.html,
+        };
 
-    if (error) {
-      console.error('Resend error:', error);
-      console.error('Resend error details:', JSON.stringify(error, null, 2));
-      return res.status(500).json({ 
-        error: 'Failed to send email',
-        details: error.message || 'Unknown email error'
-      });
+        const { data, error } = await resend.emails.send(emailData);
+        if (error) {
+          console.error('Resend error (application saved, email skipped):', error);
+        } else {
+          console.log('Email sent successfully:', data?.id);
+          emailSent = true;
+        }
+      } else {
+        console.log('Skipping email: no recipients configured');
+      }
+    } else {
+      console.log('Skipping email: RESEND_API_KEY not set');
     }
 
-    console.log('Email sent successfully:', data);
-
-    return res.status(200).json({ 
-      success: true, 
-      messageId: data?.id,
+    return res.status(200).json({
+      success: true,
+      messageId: emailSent ? 'sent' : undefined,
       referenceNumber: insertedApplication.reference_number,
-      message: 'Application submitted and email notification sent successfully' 
+      message: emailSent
+        ? 'Application submitted and email notification sent successfully'
+        : 'Application submitted successfully'
     });
 
   } catch (error) {
