@@ -18,26 +18,28 @@ import {
 
 interface Application {
   id: string;
-  candidate_name: string;
-  email: string;
-  phone: string;
+  full_name: string;
+  batch?: string;
+  gender?: string;
+  email_official: string;
+  email_personal?: string;
+  phone_number: string;
   reference_number: string;
   applied_at: string;
-  current_ctc?: string;
-  expected_ctc?: string;
-  notice_period?: string;
-  location_comfort?: string;
-  reason_for_change?: string;
-  work_preference?: string;
-  employee_referral_code?: string;
-  cover_letter: string;
+  big_bet?: string;
+  fellowship_state?: string;
+  home_state?: string;
+  fpc_name?: string;
+  state_spoc_name?: string;
+  cover_letter?: string;
   resume_url?: string;
   custom_admin_fields?: {
     values?: Record<string, string>;
   };
   job: {
-    title: string;
-    department: string;
+    position: string;
+    organisation_name: string;
+    domain: string;
   };
 }
 
@@ -134,118 +136,30 @@ const ApplicationCard: React.FC<ApplicationCardProps> = ({
   };
 
   const renderApplicationDetails = () => {
-    if (!application.current_ctc && !application.expected_ctc && 
-        !application.notice_period && !application.location_comfort) {
-      return null;
-    }
+    const hasAny =
+      application.batch ||
+      application.gender ||
+      application.email_personal ||
+      application.big_bet ||
+      application.fellowship_state ||
+      application.home_state ||
+      application.fpc_name ||
+      application.state_spoc_name;
+    if (!hasAny) return null;
 
     return (
       <div className="mb-4 p-4 bg-gradient-to-r from-brand-lightBlue/5 to-brand-lightGreen/5 rounded-lg border">
         <h4 className="font-medium text-brand-primary mb-3">Application Details</h4>
         <div className="grid gap-3 md:grid-cols-2 text-sm">
-          {renderDetailField(application.current_ctc, 'Current CTC', 'current_ctc')}
-          {renderDetailField(application.expected_ctc, 'Expected CTC', 'expected_ctc')}
-          {renderDetailField(application.notice_period, 'Notice Period', 'notice_period')}
-          {renderDetailField(application.location_comfort, 'Location Preference', 'location_comfort', true)}
+          {renderDetailField(application.batch, 'Batch', 'batch')}
+          {renderDetailField(application.gender, 'Gender', 'gender')}
+          {renderDetailField(application.email_personal, 'Email Personal', 'email_personal')}
+          {renderDetailField(application.big_bet, 'Big Bet', 'big_bet')}
+          {renderDetailField(application.fellowship_state, 'Fellowship State', 'fellowship_state')}
+          {renderDetailField(application.home_state, 'Home State', 'home_state')}
+          {renderDetailField(application.fpc_name, 'FPC Name', 'fpc_name')}
+          {renderDetailField(application.state_spoc_name, 'State SPOC Name', 'state_spoc_name')}
         </div>
-      </div>
-    );
-  };
-
-  const renderAdditionalInfo = () => {
-    if (!application.reason_for_change && !application.work_preference && !application.employee_referral_code) {
-      return null;
-    }
-
-    return (
-      <div className="mb-4 space-y-3">
-        {application.reason_for_change && (
-          <div className="p-3 bg-brand-secondary/5 rounded-lg border">
-            <div className="flex items-center justify-between mb-2 gap-2">
-              <h4 className="font-medium text-brand-primary flex-shrink-0">Reason for Change:</h4>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => onCopyToClipboard(application.reason_for_change, `reason_for_change-${application.id}`)}
-                className="h-7 px-2 flex-shrink-0"
-                title="Copy reason for change"
-              >
-                {copiedField === `reason_for_change-${application.id}` ? (
-                  <>
-                    <Check className="h-4 w-4 mr-1 text-green-500" />
-                    Copied!
-                  </>
-                ) : (
-                  <>
-                    <Clipboard className="h-4 w-4 mr-1" />
-                    Copy
-                  </>
-                )}
-              </Button>
-            </div>
-            <p className="text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed break-words">
-              {application.reason_for_change}
-            </p>
-          </div>
-        )}
-        {application.work_preference && (
-          <div className="p-3 bg-brand-accent/5 rounded-lg border">
-            <div className="flex items-center justify-between mb-2 gap-2">
-              <h4 className="font-medium text-brand-primary flex-shrink-0">Work Style Preference:</h4>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => onCopyToClipboard(application.work_preference, `work_preference-${application.id}`)}
-                className="h-7 px-2 flex-shrink-0"
-                title="Copy work preference"
-              >
-                {copiedField === `work_preference-${application.id}` ? (
-                  <>
-                    <Check className="h-4 w-4 mr-1 text-green-500" />
-                    Copied!
-                  </>
-                ) : (
-                  <>
-                    <Clipboard className="h-4 w-4 mr-1" />
-                    Copy
-                  </>
-                )}
-              </Button>
-            </div>
-            <p className="text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed break-words">
-              {application.work_preference}
-            </p>
-          </div>
-        )}
-        {application.employee_referral_code && (
-          <div className="p-3 bg-brand-lightGreen/5 rounded-lg border">
-            <div className="flex items-center justify-between mb-2 gap-2">
-              <h4 className="font-medium text-brand-primary flex-shrink-0">Employee Referral Code:</h4>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => onCopyToClipboard(application.employee_referral_code, `employee_referral_code-${application.id}`)}
-                className="h-7 px-2 flex-shrink-0"
-                title="Copy employee referral code"
-              >
-                {copiedField === `employee_referral_code-${application.id}` ? (
-                  <>
-                    <Check className="h-4 w-4 mr-1 text-green-500" />
-                    Copied!
-                  </>
-                ) : (
-                  <>
-                    <Clipboard className="h-4 w-4 mr-1" />
-                    Copy
-                  </>
-                )}
-              </Button>
-            </div>
-            <p className="text-sm text-muted-foreground break-words">
-              {application.employee_referral_code}
-            </p>
-          </div>
-        )}
       </div>
     );
   };
@@ -447,61 +361,62 @@ const ApplicationCard: React.FC<ApplicationCardProps> = ({
         </div>
 
         {renderApplicationDetails()}
-        {renderAdditionalInfo()}
 
-        <div className="mb-4">
-          <div className="flex items-center justify-between mb-2 gap-2">
-            <h4 className="font-medium flex-shrink-0">Cover Letter:</h4>
-            <div className="flex gap-2 flex-shrink-0">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => onCopyToClipboard(application.cover_letter, `cover-${application.id}`)}
-                className="h-7 px-2"
-                title="Copy cover letter"
-              >
-                {copiedField === `cover-${application.id}` ? (
-                  <>
-                    <Check className="h-4 w-4 mr-1 text-green-500" />
-                    Copied!
-                  </>
-                ) : (
-                  <>
-                    <Clipboard className="h-4 w-4 mr-1" />
-                    Copy
-                  </>
-                )}
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => onToggleCoverLetter(application.id)}
-                className="text-brand-primary hover:text-brand-primary/80 p-1"
-              >
-                {expandedCoverLetters.has(application.id) ? (
-                  <>
-                    <ChevronUp className="h-4 w-4 mr-1" />
-                    Collapse
-                  </>
-                ) : (
-                  <>
-                    <ChevronDown className="h-4 w-4 mr-1" />
-                    Expand
-                  </>
-                )}
-              </Button>
+        {application.cover_letter && (
+          <div className="mb-4">
+            <div className="flex items-center justify-between mb-2 gap-2">
+              <h4 className="font-medium flex-shrink-0">Cover Letter:</h4>
+              <div className="flex gap-2 flex-shrink-0">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => onCopyToClipboard(application.cover_letter, `cover-${application.id}`)}
+                  className="h-7 px-2"
+                  title="Copy cover letter"
+                >
+                  {copiedField === `cover-${application.id}` ? (
+                    <>
+                      <Check className="h-4 w-4 mr-1 text-green-500" />
+                      Copied!
+                    </>
+                  ) : (
+                    <>
+                      <Clipboard className="h-4 w-4 mr-1" />
+                      Copy
+                    </>
+                  )}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => onToggleCoverLetter(application.id)}
+                  className="text-brand-primary hover:text-brand-primary/80 p-1"
+                >
+                  {expandedCoverLetters.has(application.id) ? (
+                    <>
+                      <ChevronUp className="h-4 w-4 mr-1" />
+                      Collapse
+                    </>
+                  ) : (
+                    <>
+                      <ChevronDown className="h-4 w-4 mr-1" />
+                      Expand
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+            <div className={`text-sm text-muted-foreground transition-all duration-200 ${
+              expandedCoverLetters.has(application.id)
+                ? 'max-h-none'
+                : 'line-clamp-3 max-h-16'
+            }`}>
+              <p className="whitespace-pre-wrap leading-relaxed break-words">
+                {application.cover_letter}
+              </p>
             </div>
           </div>
-          <div className={`text-sm text-muted-foreground transition-all duration-200 ${
-            expandedCoverLetters.has(application.id) 
-              ? 'max-h-none' 
-              : 'line-clamp-3 max-h-16'
-          }`}>
-            <p className="whitespace-pre-wrap leading-relaxed break-words">
-              {application.cover_letter}
-            </p>
-          </div>
-        </div>
+        )}
 
         {renderCustomFields()}
 
