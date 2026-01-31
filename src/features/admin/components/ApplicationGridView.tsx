@@ -89,6 +89,8 @@ export function ApplicationGridView({ applications: initialApplications, onDelet
   const [externalFilters, setExternalFilters] = useState({
     positions: [] as string[],
     applicantName: '',
+    searchByFields: '', // Batch, Phone, Fellowship State, Home State, Big Bet
+    gender: [] as string[],
     customFields: {} as Record<string, string[]> // Dynamic custom field filters
   });
 
@@ -430,8 +432,10 @@ export function ApplicationGridView({ applications: initialApplications, onDelet
 
   // External filtering functions for AG Grid
   const isExternalFilterPresent = useCallback(() => {
-    return externalFilters.positions.length > 0 || 
+    return externalFilters.positions.length > 0 ||
            externalFilters.applicantName.length > 0 ||
+           externalFilters.gender.length > 0 ||
+           externalFilters.searchByFields.trim().length > 0 ||
            Object.values(externalFilters.customFields).some(filters => filters.length > 0);
   }, [externalFilters]);
 
@@ -443,10 +447,31 @@ export function ApplicationGridView({ applications: initialApplications, onDelet
       return false;
     }
     
-    
     // Filter by applicant name (search)
-    if (externalFilters.applicantName && !data.candidate_name?.toLowerCase().includes(externalFilters.applicantName.toLowerCase())) {
+    const name = (data as { full_name?: string }).full_name ?? data.candidate_name ?? '';
+    if (externalFilters.applicantName && !name.toLowerCase().includes(externalFilters.applicantName.toLowerCase())) {
       return false;
+    }
+    
+    // Filter by Gender (default dropdown)
+    if (externalFilters.gender.length > 0) {
+      const appGender = (data as { gender?: string }).gender ?? '';
+      const sel = externalFilters.gender;
+      const showBlank = sel.includes('__BLANK__') && !String(appGender).trim();
+      const showMatch = sel.filter(v => v !== '__BLANK__').includes(appGender);
+      if (!showBlank && !showMatch) return false;
+    }
+    
+    // Search across Batch, Phone, Fellowship State, Home State, Big Bet
+    if (externalFilters.searchByFields.trim()) {
+      const q = externalFilters.searchByFields.toLowerCase().trim();
+      const batch = (data as { batch?: string }).batch ?? '';
+      const phone = (data as { phone_number?: string }).phone_number ?? '';
+      const fellowshipState = (data as { fellowship_state?: string }).fellowship_state ?? '';
+      const homeState = (data as { home_state?: string }).home_state ?? '';
+      const bigBet = (data as { big_bet?: string }).big_bet ?? '';
+      const matches = [batch, phone, fellowshipState, homeState, bigBet].some(f => f && String(f).toLowerCase().includes(q));
+      if (!matches) return false;
     }
     
     // Filter by custom fields (dynamic)
@@ -491,6 +516,13 @@ export function ApplicationGridView({ applications: initialApplications, onDelet
       value: title
     })), [uniqueJobTitles]);
 
+  const genderOptions: MultiSelectOption[] = useMemo(() => [
+    { label: 'Blank (Not Assigned)', value: '__BLANK__' },
+    { label: 'Male', value: 'Male' },
+    { label: 'Female', value: 'Female' },
+    { label: 'Other', value: 'Other' },
+    { label: 'Prefer not to say', value: 'Prefer not to say' }
+  ], []);
 
   // Helper function to get options for custom dropdown fields
   const getCustomFieldOptions = useCallback((columnId: string): MultiSelectOption[] => {
@@ -562,6 +594,31 @@ export function ApplicationGridView({ applications: initialApplications, onDelet
             maxDisplay={1}
           />
 
+          {/* Gender Filter */}
+          <MultiSelect
+            options={genderOptions}
+            selected={externalFilters.gender}
+            onChange={(selected) => {
+              setExternalFilters(prev => ({ ...prev, gender: selected }));
+              gridApi?.onFilterChanged();
+            }}
+            placeholder="All Genders"
+            maxDisplay={1}
+          />
+
+          {/* Search: Batch, Phone, States, Big Bet */}
+          <div className="relative min-w-[200px] max-w-[280px]">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Input
+              placeholder="Search batch, phone, states, big bet..."
+              value={externalFilters.searchByFields}
+              onChange={(e) => {
+                setExternalFilters(prev => ({ ...prev, searchByFields: e.target.value }));
+                gridApi?.onFilterChanged();
+              }}
+              className="pl-10"
+            />
+          </div>
 
           {/* Dynamic Custom Field Filters */}
           {adminColumns
@@ -586,7 +643,7 @@ export function ApplicationGridView({ applications: initialApplications, onDelet
         </div>
         
         {/* Active Filters Display */}
-        {(externalFilters.positions.length > 0 || externalFilters.applicantName || Object.values(externalFilters.customFields).some(filters => filters.length > 0)) && (
+        {(externalFilters.positions.length > 0 || externalFilters.applicantName || externalFilters.gender.length > 0 || externalFilters.searchByFields.trim() || Object.values(externalFilters.customFields).some(filters => filters.length > 0)) && (
           <div className="flex items-center gap-2">
             <span className="text-sm text-muted-foreground">Active filters:</span>
             {externalFilters.positions.map(position => (
@@ -599,7 +656,16 @@ export function ApplicationGridView({ applications: initialApplications, onDelet
                 Name: {externalFilters.applicantName}
               </Badge>
             )}
-            {/* Custom Field Active Filters */}
+            {externalFilters.gender.length > 0 && externalFilters.gender.map(v => (
+              <Badge key={v} variant="secondary" className="text-xs">
+                Gender: {v === '__BLANK__' ? 'Blank' : v}
+              </Badge>
+            ))}
+            {externalFilters.searchByFields.trim() && (
+              <Badge variant="secondary" className="text-xs">
+                Search: {externalFilters.searchByFields}
+              </Badge>
+            )}
             {Object.entries(externalFilters.customFields).map(([fieldId, selectedValues]) => {
               const column = adminColumns.find(col => col.id === fieldId);
               return selectedValues.map(value => (
@@ -615,6 +681,8 @@ export function ApplicationGridView({ applications: initialApplications, onDelet
                 setExternalFilters({ 
                   positions: [], 
                   applicantName: '',
+                  searchByFields: '',
+                  gender: [],
                   customFields: {}
                 });
                 gridApi?.onFilterChanged();
