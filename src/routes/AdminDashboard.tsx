@@ -100,6 +100,10 @@ export default function AdminDashboard() {
     applicantName: '',
     searchByFields: '', // Batch, Phone, Fellowship State, Home State, Big Bet
     gender: [] as string[],
+    organisationName: '',
+    domain: '',
+    location: '',
+    applyBy: '',
     customFields: {} as Record<string, string[]> // Dynamic custom field filters
   });
   const [appSortBy, setAppSortBy] = useState<'date' | 'name' | 'position'>('date');
@@ -578,8 +582,8 @@ export default function AdminDashboard() {
         if (!showBlank && !showMatch) return false;
       }
       // Search across Batch, Phone, Fellowship State, Home State, Big Bet
-      if (applicationFilters.searchByFields.trim()) {
-        const q = applicationFilters.searchByFields.toLowerCase().trim();
+      if ((applicationFilters.searchByFields ?? '').trim()) {
+        const q = (applicationFilters.searchByFields ?? '').toLowerCase().trim();
         const batch = (app as Application & { batch?: string }).batch ?? '';
         const phone = (app as Application & { phone_number?: string }).phone_number ?? '';
         const fellowshipState = (app as Application & { fellowship_state?: string }).fellowship_state ?? '';
@@ -589,17 +593,20 @@ export default function AdminDashboard() {
         if (!matches) return false;
       }
       // Filter by job: Organisation name, Domain, Location, Apply by
-      if (applicationFilters.organisationName.trim()) {
+      const orgName = (applicationFilters.organisationName ?? '').trim();
+      if (orgName) {
         const org = (app.job as { organisation_name?: string }).organisation_name ?? '';
-        if (!org.toLowerCase().includes(applicationFilters.organisationName.toLowerCase().trim())) return false;
+        if (!org.toLowerCase().includes(orgName.toLowerCase())) return false;
       }
-      if (applicationFilters.domain.trim()) {
+      const domainFilter = (applicationFilters.domain ?? '').trim();
+      if (domainFilter) {
         const d = app.job.domain ?? '';
-        if (!d.toLowerCase().includes(applicationFilters.domain.toLowerCase().trim())) return false;
+        if (!d.toLowerCase().includes(domainFilter.toLowerCase())) return false;
       }
-      if (applicationFilters.location.trim()) {
+      const locationFilter = (applicationFilters.location ?? '').trim();
+      if (locationFilter) {
         const loc = (app.job as { location?: string }).location ?? '';
-        if (!loc.toLowerCase().includes(applicationFilters.location.toLowerCase().trim())) return false;
+        if (!loc.toLowerCase().includes(locationFilter.toLowerCase())) return false;
       }
       if (applicationFilters.applyBy) {
         const applyBy = (app.job as { apply_by?: string }).apply_by ?? '';
@@ -1031,7 +1038,7 @@ export default function AdminDashboard() {
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
                   <Input
                     placeholder="Batch, phone, states..."
-                    value={applicationFilters.searchByFields}
+                    value={applicationFilters.searchByFields ?? ''}
                     onChange={(e) => setApplicationFilters(prev => ({ ...prev, searchByFields: e.target.value }))}
                     className="pl-9 h-9 w-full min-w-0"
                   />
@@ -1043,25 +1050,25 @@ export default function AdminDashboard() {
                 <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide flex-shrink-0">Job</span>
                 <Input
                   placeholder="Organisation"
-                  value={applicationFilters.organisationName}
+                  value={applicationFilters.organisationName ?? ''}
                   onChange={(e) => setApplicationFilters(prev => ({ ...prev, organisationName: e.target.value }))}
                   className="flex-[1_1_140px] min-w-0 max-w-[200px] h-9"
                 />
                 <Input
                   placeholder="Domain"
-                  value={applicationFilters.domain}
+                  value={applicationFilters.domain ?? ''}
                   onChange={(e) => setApplicationFilters(prev => ({ ...prev, domain: e.target.value }))}
                   className="flex-[1_1_120px] min-w-0 max-w-[180px] h-9"
                 />
                 <Input
                   placeholder="Location"
-                  value={applicationFilters.location}
+                  value={applicationFilters.location ?? ''}
                   onChange={(e) => setApplicationFilters(prev => ({ ...prev, location: e.target.value }))}
                   className="flex-[1_1_120px] min-w-0 max-w-[180px] h-9"
                 />
                 <Input
                   type="date"
-                  value={applicationFilters.applyBy}
+                  value={applicationFilters.applyBy ?? ''}
                   onChange={(e) => setApplicationFilters(prev => ({ ...prev, applyBy: e.target.value }))}
                   className="flex-[1_1_140px] min-w-0 max-w-[180px] h-9 [color-scheme:light]"
                   title="Apply by date"
@@ -1117,7 +1124,7 @@ export default function AdminDashboard() {
                 </select>
               </div>
               
-              {(applicationFilters.positions.length > 0 || applicationFilters.applicantName || applicationFilters.gender.length > 0 || applicationFilters.searchByFields.trim() || applicationFilters.organisationName.trim() || applicationFilters.domain.trim() || applicationFilters.location.trim() || applicationFilters.applyBy || Object.values(applicationFilters.customFields).some(values => values.length > 0)) && (
+              {(applicationFilters.positions.length > 0 || applicationFilters.applicantName || applicationFilters.gender.length > 0 || (applicationFilters.searchByFields ?? '').trim() || (applicationFilters.organisationName ?? '').trim() || (applicationFilters.domain ?? '').trim() || (applicationFilters.location ?? '').trim() || applicationFilters.applyBy || Object.values(applicationFilters.customFields).some(values => values.length > 0)) && (
                 <div className="mt-4 pt-3 border-t border-border flex flex-wrap items-center gap-2 min-w-0">
                   <span className="text-sm text-muted-foreground flex-shrink-0">Active filters:</span>
                   {applicationFilters.positions.map(position => (
@@ -1135,22 +1142,22 @@ export default function AdminDashboard() {
                       Gender: {v === '__BLANK__' ? 'Blank' : v}
                     </Badge>
                   ))}
-                  {applicationFilters.searchByFields.trim() && (
+                  {(applicationFilters.searchByFields ?? '').trim() && (
                     <Badge variant="secondary" className="text-xs max-w-[200px] truncate">
                       Search: {applicationFilters.searchByFields}
                     </Badge>
                   )}
-                  {applicationFilters.organisationName.trim() && (
+                  {(applicationFilters.organisationName ?? '').trim() && (
                     <Badge variant="secondary" className="text-xs max-w-[200px] truncate">
                       Org: {applicationFilters.organisationName}
                     </Badge>
                   )}
-                  {applicationFilters.domain.trim() && (
+                  {(applicationFilters.domain ?? '').trim() && (
                     <Badge variant="secondary" className="text-xs max-w-[200px] truncate">
                       Domain: {applicationFilters.domain}
                     </Badge>
                   )}
-                  {applicationFilters.location.trim() && (
+                  {(applicationFilters.location ?? '').trim() && (
                     <Badge variant="secondary" className="text-xs max-w-[200px] truncate">
                       Location: {applicationFilters.location}
                     </Badge>

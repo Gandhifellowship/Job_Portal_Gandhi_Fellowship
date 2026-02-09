@@ -433,9 +433,9 @@ export function ApplicationGridView({ applications: initialApplications, onDelet
   // External filtering functions for AG Grid
   const isExternalFilterPresent = useCallback(() => {
     return externalFilters.positions.length > 0 ||
-           externalFilters.applicantName.length > 0 ||
+           (externalFilters.applicantName ?? '').length > 0 ||
            externalFilters.gender.length > 0 ||
-           externalFilters.searchByFields.trim().length > 0 ||
+           (externalFilters.searchByFields ?? '').trim().length > 0 ||
            Object.values(externalFilters.customFields).some(filters => filters.length > 0);
   }, [externalFilters]);
 
@@ -463,8 +463,8 @@ export function ApplicationGridView({ applications: initialApplications, onDelet
     }
     
     // Search across Batch, Phone, Fellowship State, Home State, Big Bet
-    if (externalFilters.searchByFields.trim()) {
-      const q = externalFilters.searchByFields.toLowerCase().trim();
+    if ((externalFilters.searchByFields ?? '').trim()) {
+      const q = (externalFilters.searchByFields ?? '').toLowerCase().trim();
       const batch = (data as { batch?: string }).batch ?? '';
       const phone = (data as { phone_number?: string }).phone_number ?? '';
       const fellowshipState = (data as { fellowship_state?: string }).fellowship_state ?? '';
@@ -573,7 +573,7 @@ export function ApplicationGridView({ applications: initialApplications, onDelet
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
             <Input
               placeholder="Search applicant name..."
-              value={externalFilters.applicantName}
+              value={externalFilters.applicantName ?? ''}
               onChange={(e) => {
                 setExternalFilters(prev => ({ ...prev, applicantName: e.target.value }));
                 gridApi?.onFilterChanged();
@@ -611,7 +611,7 @@ export function ApplicationGridView({ applications: initialApplications, onDelet
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
             <Input
               placeholder="Search batch, phone, states, big bet..."
-              value={externalFilters.searchByFields}
+              value={externalFilters.searchByFields ?? ''}
               onChange={(e) => {
                 setExternalFilters(prev => ({ ...prev, searchByFields: e.target.value }));
                 gridApi?.onFilterChanged();
@@ -643,7 +643,7 @@ export function ApplicationGridView({ applications: initialApplications, onDelet
         </div>
         
         {/* Active Filters Display */}
-        {(externalFilters.positions.length > 0 || externalFilters.applicantName || externalFilters.gender.length > 0 || externalFilters.searchByFields.trim() || Object.values(externalFilters.customFields).some(filters => filters.length > 0)) && (
+        {(externalFilters.positions.length > 0 || (externalFilters.applicantName ?? '') || externalFilters.gender.length > 0 || (externalFilters.searchByFields ?? '').trim() || Object.values(externalFilters.customFields).some(filters => filters.length > 0)) && (
           <div className="flex items-center gap-2">
             <span className="text-sm text-muted-foreground">Active filters:</span>
             {externalFilters.positions.map(position => (
@@ -661,7 +661,7 @@ export function ApplicationGridView({ applications: initialApplications, onDelet
                 Gender: {v === '__BLANK__' ? 'Blank' : v}
               </Badge>
             ))}
-            {externalFilters.searchByFields.trim() && (
+            {(externalFilters.searchByFields ?? '').trim() && (
               <Badge variant="secondary" className="text-xs">
                 Search: {externalFilters.searchByFields}
               </Badge>
