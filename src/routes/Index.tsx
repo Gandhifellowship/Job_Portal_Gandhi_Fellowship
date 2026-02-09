@@ -232,7 +232,7 @@ const Index = () => {
                 <h3 className="text-lg font-bold text-primary-800">How Does The Portal Works</h3>
                 <p className="text-sm text-primary-600 mt-0.5">Follow these steps for a smooth experience</p>
               </div>
-              <ScrollArea className="max-h-[min(70vh,420px)]">
+              <ScrollArea className="h-[min(70vh,420px)]">
                 <ol className="list-decimal list-inside space-y-3 px-5 py-4 text-sm text-primary-700 leading-relaxed">
                   {PORTAL_STEPS.map((step, i) => (
                     <li key={i} className="pl-1">
@@ -302,7 +302,7 @@ const Index = () => {
                 <h3 className="text-lg font-bold text-primary-800">Roles & Support System</h3>
                 <p className="text-sm text-primary-600 mt-0.5">FPC, SPOCs, NEST team and fellow responsibilities</p>
               </div>
-              <ScrollArea className="max-h-[min(70vh,440px)]">
+              <ScrollArea className="h-[min(70vh,440px)]">
                 <div className="px-5 py-4 text-sm text-primary-700 space-y-4">
                   <section>
                     <h4 className="font-semibold text-primary-800 mb-1.5">1) Fellow Placement Committee (FPC)</h4>
@@ -394,7 +394,7 @@ const Index = () => {
                     <h3 className="text-lg font-bold text-primary-800">Frequently Asked Questions</h3>
                     <p className="text-sm text-primary-600 mt-0.5">Quick answers about the career support process and platform</p>
                   </div>
-                  <ScrollArea className="max-h-[min(75vh,480px)]">
+                  <ScrollArea className="h-[min(75vh,480px)]">
                     <div className="px-5 py-4 space-y-5">
                       {FAQ_ITEMS.map((item, i) => (
                         <div key={i} className="border-b border-primary-100 pb-4 last:border-0 last:pb-0">
