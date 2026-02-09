@@ -77,6 +77,8 @@ interface Application {
     position: string;
     organisation_name: string;
     domain: string;
+    location?: string;
+    apply_by?: string;
   };
   custom_admin_fields?: {
     values: Record<string, string>;
@@ -145,7 +147,7 @@ export default function AdminDashboard() {
         .from('applications')
         .select(`
           *,
-          job:jobs(position, organisation_name, domain)
+          job:jobs(position, organisation_name, domain, location, apply_by)
         `)
         .order('applied_at', { ascending: false });
 
@@ -586,6 +588,24 @@ export default function AdminDashboard() {
         const matches = [batch, phone, fellowshipState, homeState, bigBet].some(f => f && String(f).toLowerCase().includes(q));
         if (!matches) return false;
       }
+      // Filter by job: Organisation name, Domain, Location, Apply by
+      if (applicationFilters.organisationName.trim()) {
+        const org = (app.job as { organisation_name?: string }).organisation_name ?? '';
+        if (!org.toLowerCase().includes(applicationFilters.organisationName.toLowerCase().trim())) return false;
+      }
+      if (applicationFilters.domain.trim()) {
+        const d = app.job.domain ?? '';
+        if (!d.toLowerCase().includes(applicationFilters.domain.toLowerCase().trim())) return false;
+      }
+      if (applicationFilters.location.trim()) {
+        const loc = (app.job as { location?: string }).location ?? '';
+        if (!loc.toLowerCase().includes(applicationFilters.location.toLowerCase().trim())) return false;
+      }
+      if (applicationFilters.applyBy) {
+        const applyBy = (app.job as { apply_by?: string }).apply_by ?? '';
+        const jobDate = applyBy ? applyBy.split('T')[0] : '';
+        if (jobDate !== applicationFilters.applyBy) return false;
+      }
     // Filter by custom fields (dynamic)
     for (const [fieldId, selectedValues] of Object.entries(applicationFilters.customFields)) {
       if (selectedValues.length > 0) {
@@ -931,7 +951,7 @@ export default function AdminDashboard() {
           </TabsContent>
           )}
 
-          <TabsContent value="applications" className="space-y-6">
+          <TabsContent value="applications" className="space-y-6 min-w-0">
             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
               <h2 className="text-2xl font-bold">Applications</h2>
               <Button
@@ -973,83 +993,115 @@ export default function AdminDashboard() {
                 </div>
               </div>
             </div>{/* Application Filters and Sorting */}
-            <div className="bg-white p-6 rounded-lg shadow-sm border">
-              <div className="flex flex-wrap gap-4 items-center mb-4">
-                <div className="flex items-center gap-2">
+            <div className="bg-white p-6 rounded-lg shadow-sm border min-w-0 overflow-hidden">
+              {/* Row 1: Applicant & search filters */}
+              <div className="flex flex-wrap gap-3 items-center mb-4">
+                <div className="flex items-center gap-2 flex-shrink-0">
                   <Filter className="h-4 w-4 text-primary-600" />
-                  <span className="text-sm font-medium text-primary-700">Filters:</span>
+                  <span className="text-sm font-medium text-primary-700">Filters</span>
                 </div>
-                
-                {/* Applicant Name Search */}
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <div className="relative flex-[1_1_180px] min-w-0 max-w-[260px]">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
                   <Input
-                    placeholder="Search applicant name..."
+                    placeholder="Applicant name..."
                     value={applicationFilters.applicantName}
                     onChange={(e) => setApplicationFilters(prev => ({ ...prev, applicantName: e.target.value }))}
-                    className="pl-10 min-w-[200px] max-w-[250px]"
+                    className="pl-9 h-9 w-full min-w-0"
                   />
                 </div>
-
-                {/* Multi-select Position Filter */}
-                <MultiSelect
-                  options={positionOptions}
-                  selected={applicationFilters.positions}
-                  onChange={(selected) => setApplicationFilters(prev => ({ ...prev, positions: selected }))}
-                  placeholder="All Positions"
-                  maxDisplay={1}
-                />
-
-                {/* Gender Filter */}
-                <MultiSelect
-                  options={genderOptions}
-                  selected={applicationFilters.gender}
-                  onChange={(selected) => setApplicationFilters(prev => ({ ...prev, gender: selected }))}
-                  placeholder="All Genders"
-                  maxDisplay={1}
-                />
-
-                {/* Search: Batch, Phone, States, Big Bet */}
-                <div className="relative min-w-[200px] max-w-[280px]">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <div className="flex-[1_1_140px] min-w-0 max-w-[200px]">
+                  <MultiSelect
+                    options={positionOptions}
+                    selected={applicationFilters.positions}
+                    onChange={(selected) => setApplicationFilters(prev => ({ ...prev, positions: selected }))}
+                    placeholder="Position"
+                    maxDisplay={1}
+                  />
+                </div>
+                <div className="flex-[1_1_120px] min-w-0 max-w-[180px]">
+                  <MultiSelect
+                    options={genderOptions}
+                    selected={applicationFilters.gender}
+                    onChange={(selected) => setApplicationFilters(prev => ({ ...prev, gender: selected }))}
+                    placeholder="Gender"
+                    maxDisplay={1}
+                  />
+                </div>
+                <div className="relative flex-[1_1_180px] min-w-0 max-w-[260px]">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
                   <Input
-                    placeholder="Search batch, phone, states, big bet..."
+                    placeholder="Batch, phone, states..."
                     value={applicationFilters.searchByFields}
                     onChange={(e) => setApplicationFilters(prev => ({ ...prev, searchByFields: e.target.value }))}
-                    className="pl-10"
+                    className="pl-9 h-9 w-full min-w-0"
                   />
                 </div>
-
-                {/* Dynamic Custom Field Filters */}
-                {adminColumns
-                  .filter(col => col.type === 'dropdown' && col.is_custom)
-                  .map(column => (
-                <MultiSelect
-                      key={column.id}
-                      options={getCustomFieldOptions(column.id)}
-                      selected={applicationFilters.customFields[column.id] || []}
-                      onChange={(selected) => {
-                        setApplicationFilters(prev => ({
-                          ...prev,
-                          customFields: { ...prev.customFields, [column.id]: selected }
-                        }));
-                      }}
-                      placeholder={`All ${column.name}`}
-                  maxDisplay={1}
-                />
-                  ))
-                }
               </div>
-              
-              <div className="flex gap-4 items-center">
-                <div className="flex items-center gap-2">
+
+              {/* Row 2: Job filters */}
+              <div className="flex flex-wrap gap-3 items-center mb-4 pl-6 border-l-2 border-primary-100">
+                <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide flex-shrink-0">Job</span>
+                <Input
+                  placeholder="Organisation"
+                  value={applicationFilters.organisationName}
+                  onChange={(e) => setApplicationFilters(prev => ({ ...prev, organisationName: e.target.value }))}
+                  className="flex-[1_1_140px] min-w-0 max-w-[200px] h-9"
+                />
+                <Input
+                  placeholder="Domain"
+                  value={applicationFilters.domain}
+                  onChange={(e) => setApplicationFilters(prev => ({ ...prev, domain: e.target.value }))}
+                  className="flex-[1_1_120px] min-w-0 max-w-[180px] h-9"
+                />
+                <Input
+                  placeholder="Location"
+                  value={applicationFilters.location}
+                  onChange={(e) => setApplicationFilters(prev => ({ ...prev, location: e.target.value }))}
+                  className="flex-[1_1_120px] min-w-0 max-w-[180px] h-9"
+                />
+                <Input
+                  type="date"
+                  value={applicationFilters.applyBy}
+                  onChange={(e) => setApplicationFilters(prev => ({ ...prev, applyBy: e.target.value }))}
+                  className="flex-[1_1_140px] min-w-0 max-w-[180px] h-9 [color-scheme:light]"
+                  title="Apply by date"
+                />
+              </div>
+
+              {/* Row 3: Custom column filters */}
+              {adminColumns.some(col => col.type === 'dropdown' && col.is_custom) && (
+                <div className="flex flex-wrap gap-3 items-center mb-4 pl-6 border-l-2 border-primary-100">
+                  <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide flex-shrink-0">Custom</span>
+                  {adminColumns
+                    .filter(col => col.type === 'dropdown' && col.is_custom)
+                    .map(column => (
+                      <div key={column.id} className="flex-[1_1_140px] min-w-0 max-w-[200px]">
+                        <MultiSelect
+                          options={getCustomFieldOptions(column.id)}
+                          selected={applicationFilters.customFields[column.id] || []}
+                          onChange={(selected) => {
+                            setApplicationFilters(prev => ({
+                              ...prev,
+                              customFields: { ...prev.customFields, [column.id]: selected }
+                            }));
+                          }}
+                          placeholder={column.name}
+                          maxDisplay={1}
+                        />
+                      </div>
+                    ))}
+                </div>
+              )}
+
+              <div className="flex flex-wrap gap-3 items-center pt-2 border-t border-border min-w-0">
+                <div className="flex items-center gap-2 flex-shrink-0">
                   <ArrowUpDown className="h-4 w-4 text-brand-primary" />
-                  <span className="text-sm font-medium text-brand-primary">Sort by:</span>
+                  <span className="text-sm font-medium text-brand-primary">Sort by</span>
                 </div>
                 <select
                   value={appSortBy}
                   onChange={(e) => setAppSortBy(e.target.value as 'date' | 'name' | 'position')}
-                  className="px-3 py-2 border border-primary-200 rounded-md bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20"
+                  className="px-3 py-2 h-9 border border-primary-200 rounded-md bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 min-w-0 max-w-full"
                 >
                   <option value="date">Application Date</option>
                   <option value="name">Candidate Name</option>
@@ -1058,23 +1110,23 @@ export default function AdminDashboard() {
                 <select
                   value={appSortOrder}
                   onChange={(e) => setAppSortOrder(e.target.value as 'asc' | 'desc')}
-                  className="px-3 py-2 border border-primary-200 rounded-md bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20"
+                  className="px-3 py-2 h-9 border border-primary-200 rounded-md bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 min-w-0 max-w-full"
                 >
                   <option value="desc">Newest First</option>
                   <option value="asc">Oldest First</option>
                 </select>
               </div>
               
-              {(applicationFilters.positions.length > 0 || applicationFilters.applicantName || applicationFilters.gender.length > 0 || applicationFilters.searchByFields.trim() || Object.values(applicationFilters.customFields).some(values => values.length > 0)) && (
-                <div className="mt-3 flex items-center gap-2">
-                  <span className="text-sm text-muted-foreground">Active filters:</span>
+              {(applicationFilters.positions.length > 0 || applicationFilters.applicantName || applicationFilters.gender.length > 0 || applicationFilters.searchByFields.trim() || applicationFilters.organisationName.trim() || applicationFilters.domain.trim() || applicationFilters.location.trim() || applicationFilters.applyBy || Object.values(applicationFilters.customFields).some(values => values.length > 0)) && (
+                <div className="mt-4 pt-3 border-t border-border flex flex-wrap items-center gap-2 min-w-0">
+                  <span className="text-sm text-muted-foreground flex-shrink-0">Active filters:</span>
                   {applicationFilters.positions.map(position => (
-                    <Badge key={position} variant="secondary" className="text-xs">
+                    <Badge key={position} variant="secondary" className="text-xs max-w-[200px] truncate">
                       Position: {position}
                     </Badge>
                   ))}
                   {applicationFilters.applicantName && (
-                    <Badge variant="secondary" className="text-xs">
+                    <Badge variant="secondary" className="text-xs max-w-[200px] truncate">
                       Name: {applicationFilters.applicantName}
                     </Badge>
                   )}
@@ -1084,14 +1136,34 @@ export default function AdminDashboard() {
                     </Badge>
                   ))}
                   {applicationFilters.searchByFields.trim() && (
-                    <Badge variant="secondary" className="text-xs">
+                    <Badge variant="secondary" className="text-xs max-w-[200px] truncate">
                       Search: {applicationFilters.searchByFields}
+                    </Badge>
+                  )}
+                  {applicationFilters.organisationName.trim() && (
+                    <Badge variant="secondary" className="text-xs max-w-[200px] truncate">
+                      Org: {applicationFilters.organisationName}
+                    </Badge>
+                  )}
+                  {applicationFilters.domain.trim() && (
+                    <Badge variant="secondary" className="text-xs max-w-[200px] truncate">
+                      Domain: {applicationFilters.domain}
+                    </Badge>
+                  )}
+                  {applicationFilters.location.trim() && (
+                    <Badge variant="secondary" className="text-xs max-w-[200px] truncate">
+                      Location: {applicationFilters.location}
+                    </Badge>
+                  )}
+                  {applicationFilters.applyBy && (
+                    <Badge variant="secondary" className="text-xs">
+                      Apply by: {applicationFilters.applyBy}
                     </Badge>
                   )}
                   {Object.entries(applicationFilters.customFields).map(([fieldId, selectedValues]) => {
                     const column = adminColumns.find(col => col.id === fieldId);
                     return selectedValues.map(value => (
-                      <Badge key={`${fieldId}-${value}`} variant="secondary" className="text-xs">
+                      <Badge key={`${fieldId}-${value}`} variant="secondary" className="text-xs max-w-[200px] truncate">
                         {column?.name}: {value}
                       </Badge>
                     ));
@@ -1104,6 +1176,10 @@ export default function AdminDashboard() {
                       applicantName: '',
                       searchByFields: '',
                       gender: [],
+                      organisationName: '',
+                      domain: '',
+                      location: '',
+                      applyBy: '',
                       customFields: {}
                     })}
                     className="text-xs text-primary-600 hover:text-primary-700"

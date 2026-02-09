@@ -41,10 +41,10 @@ const Index = () => {
             
             <div className="text-center max-w-5xl mx-auto">
               <h1 className="text-6xl font-bold mb-6 leading-tight text-white drop-shadow-lg">
-                Ride the Wave of Change
+                Career Support
               </h1>
               <p className="text-xl opacity-95 mb-10 max-w-3xl mx-auto leading-relaxed">
-                Shaping leaders who transform themselves, their communities, and the nation.
+                Take your first step to kick start your impact journey
               </p>
               
               <div className="flex justify-center">
@@ -64,10 +64,10 @@ const Index = () => {
       <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
         <div className="text-center mb-16">
           <h2 className="text-4xl font-bold mb-6 text-primary-700">
-            Why Choose Gandhi Fellowship?
+            Crossroad Support
           </h2>
           <p className="text-xl text-primary-600 max-w-2xl mx-auto">
-            A journey that challenges you, transforms you, and prepares you to lead change.
+            Powered by NEST, this platform supports Gandhi Fellowship community  in exploring opportunities, applying to on-boarded organizations, and navigating the career support process with clarity and confidence.
           </p>
         </div>
 
@@ -77,9 +77,9 @@ const Index = () => {
               <div className="h-16 w-16 bg-gradient-to-br from-primary-600 to-primary-500 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg">
                 <Briefcase className="h-8 w-8 text-white" />
               </div>
-              <CardTitle className="text-xl text-primary-700 mb-3">Be The Change</CardTitle>
+              <CardTitle className="text-xl text-primary-700 mb-3">How Does The Portal Works</CardTitle>
               <CardDescription className="text-primary-600 leading-relaxed">
-                You will learn to collaborate in the face of challenges. You will focus on solutions. You will celebrate diversity.
+                Familiarize yourself with the tech-enabled career support process for a smooth and efficient experience.
               </CardDescription>
             </CardHeader>
           </Card>
@@ -89,9 +89,9 @@ const Index = () => {
               <div className="h-16 w-16 bg-gradient-to-br from-secondary-500 to-secondary-400 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg">
                 <Users className="h-8 w-8 text-white" />
               </div>
-              <CardTitle className="text-xl text-primary-700 mb-3">Do Your Purpose</CardTitle>
+              <CardTitle className="text-xl text-primary-700 mb-3">Placement Guidelines</CardTitle>
               <CardDescription className="text-primary-600 leading-relaxed">
-                How about learning to weave a mat before you knit your international education dream? Discover purpose, spark solutions, and create leaders for India and the world.
+                Placement guidelines co-developed by NEST and the Fellow Placement Committee ensure a clear and structured process.
               </CardDescription>
             </CardHeader>
           </Card>
@@ -101,9 +101,9 @@ const Index = () => {
               <div className="h-16 w-16 bg-gradient-to-br from-accent-500 to-accent-400 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg">
                 <ArrowRight className="h-8 w-8 text-white" />
               </div>
-              <CardTitle className="text-xl text-primary-700 mb-3">Transform Your Self</CardTitle>
+              <CardTitle className="text-xl text-primary-700 mb-3">Roles & Support System</CardTitle>
               <CardDescription className="text-primary-600 leading-relaxed">
-                A tough hike out from metropolitan India to rural Bharat it will be. But it will also be worth every hitch. A journey not just to follow, but to lead.
+                To ensure the fellows don't feel left out or confused, we have developed a support sytem that will help them during the job application process.
               </CardDescription>
             </CardHeader>
           </Card>
@@ -127,17 +127,17 @@ const Index = () => {
             </div>
             
             <h2 className="text-4xl font-bold mb-6 text-white drop-shadow-lg">
-              Ready to Lead Change?
+              Frequently Asked Questions
             </h2>
             <p className="text-xl opacity-95 mb-10 leading-relaxed">
-              The Gandhi Fellowship is that space — a platform to discover purpose, spark solutions, and create leaders for India and the world.
+              Find quick answers to common questions about the career support process and platform.
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button asChild size="lg" className="bg-accent hover:bg-accent-600 text-white font-semibold px-8 py-6 text-lg shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105">
                 <Link to="/jobs">
                   <Briefcase className="h-6 w-6 mr-3" />
-                  Explore Jobs
+                  Find Answers
                   <ArrowRight className="h-6 w-6 ml-3" />
                 </Link>
               </Button>
