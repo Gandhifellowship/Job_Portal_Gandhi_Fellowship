@@ -4,6 +4,10 @@
 
 The logo file needs to be placed in the `public/` folder.
 
+## Replace with new logo (Gandhi Fellowship + NEST)
+
+To use the horizontal logo (GANDHI FELLOWSHIP + graphic + NEST): save or drag that image into the project as **`public/gandhi-fellowship-logo.png`** and overwrite the existing file. The site uses this path everywhere; no code changes needed.
+
 ## Steps:
 
 1. **Add the logo file to the `public/` folder:**
