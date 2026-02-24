@@ -26,6 +26,7 @@ interface Application {
   phone_number: string;
   reference_number: string;
   applied_at: string;
+  status?: string;
   big_bet?: string;
   fellowship_state?: string;
   home_state?: string;
@@ -40,6 +41,11 @@ interface Application {
     position: string;
     organisation_name: string;
     domain: string;
+    location?: string;
+    apply_by?: string;
+    about?: string;
+    compensation_range?: string;
+    pdf_url?: string;
   };
 }
 
@@ -294,9 +300,13 @@ const ApplicationCard: React.FC<ApplicationCardProps> = ({
             <h3 className="text-lg font-semibold truncate">{application.full_name}</h3>
             <p className="text-muted-foreground break-words">
               Applied for: {application.job.position} • {application.job.organisation_name} • {application.job.domain}
+              {application.job.location && <> • {application.job.location}</>}
             </p>
             <p className="text-sm text-muted-foreground">
               Ref: {application.reference_number} • Applied {formatDate(application.applied_at)}
+              {application.status && (
+                <> • Status: <span className="font-medium text-foreground">{application.status}</span></>
+              )}
             </p>
           </div>
         </div>
@@ -364,6 +374,36 @@ const ApplicationCard: React.FC<ApplicationCardProps> = ({
             </Button>
           </div>
         </div>
+
+        {/* Job details: Apply by, Location, About, Compensation, Job PDF */}
+        {(application.job.apply_by || application.job.location || application.job.about || application.job.compensation_range || application.job.pdf_url) && (
+          <div className="mb-4 p-4 bg-muted/30 rounded-lg border">
+            <h4 className="font-medium text-brand-primary mb-3">Job Details</h4>
+            <div className="grid gap-3 md:grid-cols-2 text-sm">
+              {application.job.apply_by && renderDetailField(application.job.apply_by.split('T')[0], 'Apply by', 'job.apply_by')}
+              {application.job.location && renderDetailField(application.job.location, 'Location', 'job.location')}
+              {application.job.compensation_range && renderDetailField(application.job.compensation_range, 'Compensation range', 'job.compensation_range')}
+              {application.job.about && (
+                <div className="md:col-span-2 flex items-center justify-between p-2 bg-white/50 rounded border min-w-0">
+                  <div className="min-w-0 flex-1">
+                    <span className="font-medium text-muted-foreground">About role:</span>
+                    <p className="text-foreground break-words whitespace-pre-wrap mt-1">{application.job.about}</p>
+                  </div>
+                </div>
+              )}
+              {application.job.pdf_url && (
+                <div className="md:col-span-2">
+                  <Button variant="outline" size="sm" asChild>
+                    <a href={application.job.pdf_url} target="_blank" rel="noopener noreferrer">
+                      <Download className="h-4 w-4 mr-2" />
+                      Job PDF
+                    </a>
+                  </Button>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {renderApplicationDetails()}
 

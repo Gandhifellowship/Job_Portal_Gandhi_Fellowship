@@ -48,8 +48,17 @@ const defaultAdminColumns: AdminColumn[] = [
   { id: 'fpc_name', name: 'FPC Name', type: 'text', order_index: 10 },
   { id: 'state_spoc_name', name: 'State SPOC name', type: 'text', order_index: 11 },
   { id: 'reference_number', name: 'Reference Number', type: 'text', order_index: 12 },
-  { id: 'resume_url', name: 'Resume', type: 'text', order_index: 13 },
-  { id: 'applied_at', name: 'Applied At', type: 'text', order_index: 14 },
+  { id: 'cover_letter', name: 'Cover Letter', type: 'text', order_index: 13 },
+  { id: 'resume_url', name: 'Resume', type: 'text', order_index: 14 },
+  { id: 'applied_at', name: 'Applied At', type: 'text', order_index: 15 },
+  { id: 'status', name: 'Status', type: 'text', order_index: 16 },
+  { id: 'job.organisation_name', name: 'Organisation', type: 'text', order_index: 17 },
+  { id: 'job.domain', name: 'Domain', type: 'text', order_index: 18 },
+  { id: 'job.location', name: 'Location', type: 'text', order_index: 19 },
+  { id: 'job.apply_by', name: 'Apply By', type: 'text', order_index: 20 },
+  { id: 'job.about', name: 'About (role)', type: 'text', order_index: 21 },
+  { id: 'job.compensation_range', name: 'Compensation Range', type: 'text', order_index: 22 },
+  { id: 'job.pdf_url', name: 'Job PDF URL', type: 'text', order_index: 23 },
 ];
 
 export const useApplicationGrid = () => {

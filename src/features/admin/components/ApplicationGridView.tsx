@@ -158,16 +158,21 @@ export function ApplicationGridView({ applications: initialApplications, onDelet
     if (!gridApi) return;
     
     const excelData = applications.map(app => {
-      const data = {};
-      
-      // Add all columns from database (both built-in and custom)
+      const data: Record<string, string> = {};
+      const appAny = app as Record<string, unknown>;
+      const job = appAny?.job as Record<string, unknown> | undefined;
+
       adminColumns.forEach(col => {
         if (col.id === 'applied_at') {
-          data[col.name] = formatDate(app[col.id]);
+          data[col.name] = formatDate(app.applied_at);
+        } else if (col.id.startsWith('job.')) {
+          const key = col.id.slice(4);
+          const v = job?.[key];
+          data[col.name] = key === 'apply_by' && v && typeof v === 'string' ? v.split('T')[0] : String(v ?? '');
         } else if (col.is_custom) {
-          data[col.name] = app.custom_admin_fields?.values[col.id] || '';
+          data[col.name] = app.custom_admin_fields?.values?.[col.id] ?? '';
         } else {
-          data[col.name] = app[col.id] || '';
+          data[col.name] = String(appAny[col.id] ?? '');
         }
       });
 
@@ -329,7 +334,19 @@ export function ApplicationGridView({ applications: initialApplications, onDelet
           };
         }
 
-
+        // Job fields (nested) - read-only
+        if (col.id.startsWith('job.')) {
+          const key = col.id.slice(4);
+          return {
+            ...baseColDef,
+            editable: false,
+            valueGetter: (params) => {
+              const job = params.data?.job as Record<string, unknown> | undefined;
+              const v = job?.[key];
+              return key === 'apply_by' && v && typeof v === 'string' ? v.split('T')[0] : (v ?? '');
+            },
+          };
+        }
 
         // Multi-line text columns
         if (['location_comfort', 'work_preference', 'reason_for_change', 'cover_letter'].includes(col.id)) {

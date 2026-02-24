@@ -70,6 +70,7 @@ interface Application {
   fpc_name?: string;
   state_spoc_name?: string;
   resume_url?: string;
+  cover_letter?: string;
   applied_at: string;
   status: string;
   reference_number: string;
@@ -79,6 +80,9 @@ interface Application {
     domain: string;
     location?: string;
     apply_by?: string;
+    about?: string;
+    compensation_range?: string;
+    pdf_url?: string;
   };
   custom_admin_fields?: {
     values: Record<string, string>;
@@ -151,7 +155,7 @@ export default function AdminDashboard() {
         .from('applications')
         .select(`
           *,
-          job:jobs(position, organisation_name, domain, location, apply_by)
+          job:jobs(position, organisation_name, domain, location, apply_by, about, compensation_range, pdf_url)
         `)
         .order('applied_at', { ascending: false });
 
@@ -695,28 +699,40 @@ export default function AdminDashboard() {
 
   // Download applications as Excel
   const downloadApplicationsAsExcel = () => {
-    // Prepare data for Excel
-    const excelData = filteredAndSortedApplications.map(app => ({
-      'Full Name': app.full_name,
-      'Batch': app.batch,
-      'Gender': app.gender,
-      'Email Official': app.email_official,
-      'Email Personal': app.email_personal,
-      'Phone Number': app.phone_number,
-      'Big Bet': app.big_bet || '',
-      'Fellowship State': app.fellowship_state || '',
-      'Home State': app.home_state || '',
-      'FPC Name': app.fpc_name || '',
-      'State SPOC Name': app.state_spoc_name || '',
-      'Position': app.job.position,
-      'Organisation': app.job.organisation_name,
-      'Domain': app.job.domain,
-      'Resume Link': app.resume_url || '',
-      'Status': app.status,
-      'Applied At': formatDateTime(app.applied_at),
-    }));
+    const customCols = adminColumns.filter(c => c.is_custom);
+    const excelData = filteredAndSortedApplications.map(app => {
+      const row: Record<string, string> = {
+        'Full Name': app.full_name,
+        'Batch': app.batch ?? '',
+        'Gender': app.gender ?? '',
+        'Email Official': app.email_official ?? '',
+        'Email Personal': app.email_personal ?? '',
+        'Phone Number': app.phone_number ?? '',
+        'Big Bet': app.big_bet ?? '',
+        'Fellowship State': app.fellowship_state ?? '',
+        'Home State': app.home_state ?? '',
+        'FPC Name': app.fpc_name ?? '',
+        'State SPOC Name': app.state_spoc_name ?? '',
+        'Reference Number': app.reference_number ?? '',
+        'Cover Letter': app.cover_letter ?? '',
+        'Position': app.job.position ?? '',
+        'Organisation': app.job.organisation_name ?? '',
+        'Domain': app.job.domain ?? '',
+        'Location': app.job.location ?? '',
+        'Apply By': app.job.apply_by ? app.job.apply_by.split('T')[0] : '',
+        'About (role)': app.job.about ?? '',
+        'Compensation Range': app.job.compensation_range ?? '',
+        'Job PDF URL': app.job.pdf_url ?? '',
+        'Resume Link': app.resume_url ?? '',
+        'Status': app.status ?? '',
+        'Applied At': formatDateTime(app.applied_at),
+      };
+      customCols.forEach(col => {
+        row[col.name] = app.custom_admin_fields?.values?.[col.id] ?? '';
+      });
+      return row;
+    });
 
-    // Export to Excel using shared utility
     const filename = generateFilename('applications');
     exportToExcel(excelData, filename, 'Applications');
   };
