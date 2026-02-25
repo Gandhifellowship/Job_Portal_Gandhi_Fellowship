@@ -85,6 +85,7 @@ const ApplicationCard: React.FC<ApplicationCardProps> = ({
   // Edit/Save pattern state management
   const [isEditing, setIsEditing] = useState(false);
   const [editFields, setEditFields] = useState<Record<string, string>>({});
+  const [aboutExpanded, setAboutExpanded] = useState(false);
 
   // Initialize edit fields from application data
   useEffect(() => {
@@ -352,42 +353,48 @@ const ApplicationCard: React.FC<ApplicationCardProps> = ({
           </div>
         </div>
 
-        {/* Position Applied For */}
-        <div className="mb-4">
+        {/* Position, Organisation, Domain (always visible) */}
+        <div className="mb-4 space-y-2">
           <div className="flex items-center justify-between p-2 bg-gradient-to-r from-brand-primary/5 to-brand-secondary/5 rounded border min-w-0">
             <div className="min-w-0 flex-1">
-              <span className="font-medium text-muted-foreground">Position Applied For:</span>
+              <span className="font-medium text-muted-foreground">Position:</span>
               <p className="text-foreground font-semibold truncate">{application.job.position}</p>
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => onCopyToClipboard(application.job.position, `position-${application.id}`)}
-              className="h-7 w-7 p-0 flex-shrink-0"
-              title="Copy position"
-            >
-              {copiedField === `position-${application.id}` ? (
-                <Check className="h-4 w-4 text-green-500" />
-              ) : (
-                <Clipboard className="h-4 w-4" />
-              )}
+            <Button variant="ghost" size="sm" onClick={() => onCopyToClipboard(application.job.position, `position-${application.id}`)} className="h-7 w-7 p-0 flex-shrink-0" title="Copy position">
+              {copiedField === `position-${application.id}` ? <Check className="h-4 w-4 text-green-500" /> : <Clipboard className="h-4 w-4" />}
             </Button>
           </div>
+          {renderDetailField(application.job.organisation_name ?? '', 'Organisation', 'job.org')}
+          {renderDetailField(application.job.domain ?? '', 'Domain', 'job.domain')}
+          {application.job.location && renderDetailField(application.job.location, 'Location', 'job.location')}
         </div>
 
-        {/* Job details: Apply by, Location, About, Compensation, Job PDF */}
-        {(application.job.apply_by || application.job.location || application.job.about || application.job.compensation_range || application.job.pdf_url) && (
+        {/* Job details: Apply by, About, Compensation, Job PDF */}
+        {(application.job.apply_by || application.job.about || application.job.compensation_range || application.job.pdf_url) && (
           <div className="mb-4 p-4 bg-muted/30 rounded-lg border">
             <h4 className="font-medium text-brand-primary mb-3">Job Details</h4>
             <div className="grid gap-3 md:grid-cols-2 text-sm">
               {application.job.apply_by && renderDetailField(application.job.apply_by.split('T')[0], 'Apply by', 'job.apply_by')}
-              {application.job.location && renderDetailField(application.job.location, 'Location', 'job.location')}
               {application.job.compensation_range && renderDetailField(application.job.compensation_range, 'Compensation range', 'job.compensation_range')}
               {application.job.about && (
-                <div className="md:col-span-2 flex items-center justify-between p-2 bg-white/50 rounded border min-w-0">
-                  <div className="min-w-0 flex-1">
+                <div className="md:col-span-2 p-2 bg-white/50 rounded border min-w-0">
+                  <div className="flex items-center justify-between gap-2 mb-1">
                     <span className="font-medium text-muted-foreground">About role:</span>
-                    <p className="text-foreground break-words whitespace-pre-wrap mt-1">{application.job.about}</p>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setAboutExpanded((v) => !v)}
+                      className="text-brand-primary hover:text-brand-primary/80 p-1 h-7"
+                    >
+                      {aboutExpanded ? (
+                        <><ChevronUp className="h-4 w-4 mr-1" /> Collapse</>
+                      ) : (
+                        <><ChevronDown className="h-4 w-4 mr-1" /> Expand</>
+                      )}
+                    </Button>
+                  </div>
+                  <div className={`text-sm text-foreground break-words whitespace-pre-wrap transition-all duration-200 ${aboutExpanded ? 'max-h-none' : 'line-clamp-3 max-h-16 overflow-hidden'}`}>
+                    {application.job.about}
                   </div>
                 </div>
               )}
