@@ -1,6 +1,7 @@
 import { Resend } from 'resend';
 import { createClient } from '@supabase/supabase-js';
 import formidable from 'formidable';
+import type { IncomingMessage } from 'http';
 import fs from 'fs';
 import { emailTemplates } from './email-templates.js';
 
@@ -59,7 +60,7 @@ export default async function handler(req: { method: string; url: string; body: 
     });
     
     console.log('2. Form configured, parsing request...');
-    const [fields, files] = await form.parse(req);
+    const [fields, files] = await form.parse(req as IncomingMessage);
     
     console.log('3. Form parsed successfully');
     console.log('Fields:', Object.keys(fields));

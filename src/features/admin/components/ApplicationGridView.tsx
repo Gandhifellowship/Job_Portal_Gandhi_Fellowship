@@ -735,7 +735,7 @@ export function ApplicationGridView({ applications: initialApplications, onDelet
                 Show/Hide Columns
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent onCloseAutoFocus={(e) => e.preventDefault()}>
+            <DropdownMenuContent className="max-h-[min(70vh,28rem)] overflow-y-auto" onCloseAutoFocus={(e) => e.preventDefault()}>
               <DropdownMenuLabel>Toggle Columns</DropdownMenuLabel>
               <DropdownMenuSeparator />
               {adminColumns.map((col) => {

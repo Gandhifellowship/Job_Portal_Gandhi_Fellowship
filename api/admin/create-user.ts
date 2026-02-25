@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { NextApiRequest, NextApiResponse } from 'next';
+import type { ApiRequest, ApiResponse } from '../types.js';
 
 // Create admin client with service role key (bypasses RLS)
 const supabaseAdmin = createClient(
@@ -17,7 +17,7 @@ interface CreateUserRequest {
   position: string;
 }
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+export default async function handler(req: ApiRequest, res: ApiResponse) {
   // Handle CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -77,16 +77,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (authError && authError.message.includes('already registered')) {
       console.log('User already exists in auth, attempting to get existing user');
       
-      const { data: existingUser, error: getUserError } = await supabaseAdmin.auth.admin.getUserByEmail(email);
+      const { data: listData, error: listError } = await supabaseAdmin.auth.admin.listUsers({ perPage: 1000 });
+      const existingUser = listError ? null : listData?.users?.find((u) => u.email === email);
       
-      if (getUserError || !existingUser.user) {
-        console.error('Error getting existing user:', getUserError);
+      if (!existingUser) {
+        console.error('Error getting existing user:', listError);
         return res.status(400).json({ error: 'User exists but could not be retrieved' });
       }
       
-      authUser = { user: existingUser.user };
+      authUser = { user: existingUser };
       authError = null;
-      console.log('Using existing auth user:', existingUser.user.id);
+      console.log('Using existing auth user:', existingUser.id);
     } else if (authError) {
       console.error('Auth user creation error:', authError);
       return res.status(400).json({ error: authError.message });
@@ -175,10 +176,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       message: existingAccess ? 'User access restored successfully' : 'User created successfully'
     });
 
-  } catch (error: Error) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Internal server error';
     console.error('Create user error:', error);
-    return res.status(500).json({ 
-      error: error.message || 'Internal server error' 
-    });
+    return res.status(500).json({ error: message });
   }
 }
