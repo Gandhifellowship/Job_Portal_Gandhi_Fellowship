@@ -34,6 +34,7 @@ import { ConfirmDialog } from '@/features/admin/components/ConfirmDialog';
 import { MultiSelect, MultiSelectOption } from '@/components/ui/multi-select';
 import { Input } from '@/components/ui/input';
 import { useApplicationGrid } from '@/features/applications/hooks/useApplicationGrid';
+import { fetchAllApplicationsForAdminDashboard } from '@/features/applications/data/applicationQueries';
 import { UserManagement } from '@/features/admin/components/UserManagement';
 import { JobAssignments } from '@/features/admin/components/JobAssignments';
 import { ChangePassword } from '@/features/auth/components/ChangePassword';
@@ -150,24 +151,12 @@ export default function AdminDashboard() {
       if (jobsError) throw jobsError;
       setJobs(jobsData || []);
 
-      // Fetch applications with role-based filtering
-      let applicationsQuery = supabase
-        .from('applications')
-        .select(`
-          *,
-          job:jobs(position, organisation_name, domain, location, apply_by, about, compensation_range, pdf_url)
-        `)
-        .order('applied_at', { ascending: false });
-
-      // If user is a manager, filter by assigned jobs
-      if (isManager && !isAdmin && assignedJobs.length > 0) {
-        applicationsQuery = applicationsQuery.in('job_id', assignedJobs);
-      }
-
-      const { data: applicationsData, error: applicationsError } = await applicationsQuery;
-
-      if (applicationsError) throw applicationsError;
-      setApplications(applicationsData || []);
+      const applicationsData = await fetchAllApplicationsForAdminDashboard(
+        isAdmin,
+        isManager,
+        assignedJobs
+      );
+      setApplications(applicationsData);
     } catch (error: unknown) {
       console.error('Fetch error:', error);
       const errorMessage = error instanceof Error ? error.message : "Failed to fetch data";

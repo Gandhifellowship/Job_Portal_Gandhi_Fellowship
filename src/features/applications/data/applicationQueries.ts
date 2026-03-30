@@ -4,6 +4,12 @@
 
 import { supabase } from '@/integrations/supabase/client';
 
+/**
+ * PostgREST returns at most `max_rows` (default 1000) per request.
+ * Batch with .range() so the admin UI loads every row.
+ */
+export const APPLICATION_API_PAGE_SIZE = 1000;
+
 export interface Application {
   id: string;
   full_name: string;
@@ -33,25 +39,85 @@ export interface Application {
   };
 }
 
-export const applicationQueries = {
-  /**
-   * Get all applications with job details
-   */
-  async getAll(): Promise<Application[]> {
-    const { data, error } = await supabase
+const ADMIN_DASHBOARD_JOB_SELECT = `
+  *,
+  job:jobs(position, organisation_name, domain, location, apply_by, about, compensation_range, pdf_url)
+`;
+
+/**
+ * Loads all applications for the admin dashboard, paging at APPLICATION_API_PAGE_SIZE
+ * to bypass the PostgREST single-response row cap.
+ */
+export async function fetchAllApplicationsForAdminDashboard(
+  isAdmin: boolean,
+  isManager: boolean,
+  assignedJobIds: string[]
+): Promise<Application[]> {
+  const all: Application[] = [];
+  let from = 0;
+
+  for (;;) {
+    let q = supabase
       .from('applications')
-      .select(`
-        *,
-        job:jobs(*)
-      `)
+      .select(ADMIN_DASHBOARD_JOB_SELECT)
       .order('applied_at', { ascending: false });
+
+    if (isManager && !isAdmin && assignedJobIds.length > 0) {
+      q = q.in('job_id', assignedJobIds);
+    }
+
+    const { data, error } = await q.range(from, from + APPLICATION_API_PAGE_SIZE - 1);
 
     if (error) {
       console.error('Error fetching applications:', error);
       throw error;
     }
 
-    return data || [];
+    const batch = (data ?? []) as Application[];
+    all.push(...batch);
+
+    if (batch.length < APPLICATION_API_PAGE_SIZE) {
+      break;
+    }
+    from += APPLICATION_API_PAGE_SIZE;
+  }
+
+  return all;
+}
+
+export const applicationQueries = {
+  /**
+   * Get all applications with job details
+   */
+  async getAll(): Promise<Application[]> {
+    const all: Application[] = [];
+    let from = 0;
+
+    for (;;) {
+      const { data, error } = await supabase
+        .from('applications')
+        .select(`
+        *,
+        job:jobs(*)
+      `)
+        .order('applied_at', { ascending: false })
+        .range(from, from + APPLICATION_API_PAGE_SIZE - 1);
+
+      if (error) {
+        console.error('Error fetching applications:', error);
+        throw error;
+      }
+
+      const batch = (data ?? []) as Application[];
+      all.push(...batch);
+
+      if (batch.length < APPLICATION_API_PAGE_SIZE) {
+        break;
+      }
+      from += APPLICATION_API_PAGE_SIZE;
+    }
+
+    return all;
   },
 
   /**
