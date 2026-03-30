@@ -5,10 +5,37 @@
 import { supabase } from '@/integrations/supabase/client';
 
 /**
- * PostgREST returns at most `max_rows` (default 1000) per request.
- * Batch with .range() so the admin UI loads every row.
+ * PostgREST caps each response at your project's API `max_rows` (Supabase Dashboard → Settings → API).
+ * We request a range window larger than any practical `max_rows`; the server still returns at most
+ * `max_rows` rows per call. Advance `offset` by the actual batch size and stop when a batch is empty,
+ * so this works whether `max_rows` is 1000, 5000, or another value — no hardcoded page size.
  */
-export const APPLICATION_API_PAGE_SIZE = 1000;
+const POSTGREST_RANGE_WINDOW_MAX = 1_000_000;
+
+async function fetchAllRowsInRangeBatches<T>(options: {
+  fetchPage: (offset: number) => Promise<{ data: T[] | null; error: { message: string } | null }>;
+}): Promise<T[]> {
+  const { fetchPage } = options;
+  const all: T[] = [];
+  let offset = 0;
+
+  for (;;) {
+    const { data, error } = await fetchPage(offset);
+    if (error) {
+      console.error('Error fetching application rows:', error);
+      throw error;
+    }
+
+    const batch = (data ?? []) as T[];
+    if (batch.length === 0) {
+      break;
+    }
+    all.push(...batch);
+    offset += batch.length;
+  }
+
+  return all;
+}
 
 export interface Application {
   id: string;
@@ -45,44 +72,27 @@ const ADMIN_DASHBOARD_JOB_SELECT = `
 `;
 
 /**
- * Loads all applications for the admin dashboard, paging at APPLICATION_API_PAGE_SIZE
- * to bypass the PostgREST single-response row cap.
+ * Loads all applications for the admin dashboard in batches (respects PostgREST `max_rows` per response).
  */
 export async function fetchAllApplicationsForAdminDashboard(
   isAdmin: boolean,
   isManager: boolean,
   assignedJobIds: string[]
 ): Promise<Application[]> {
-  const all: Application[] = [];
-  let from = 0;
+  return fetchAllRowsInRangeBatches<Application>({
+    fetchPage: (offset) => {
+      let q = supabase
+        .from('applications')
+        .select(ADMIN_DASHBOARD_JOB_SELECT)
+        .order('applied_at', { ascending: false });
 
-  for (;;) {
-    let q = supabase
-      .from('applications')
-      .select(ADMIN_DASHBOARD_JOB_SELECT)
-      .order('applied_at', { ascending: false });
+      if (isManager && !isAdmin && assignedJobIds.length > 0) {
+        q = q.in('job_id', assignedJobIds);
+      }
 
-    if (isManager && !isAdmin && assignedJobIds.length > 0) {
-      q = q.in('job_id', assignedJobIds);
-    }
-
-    const { data, error } = await q.range(from, from + APPLICATION_API_PAGE_SIZE - 1);
-
-    if (error) {
-      console.error('Error fetching applications:', error);
-      throw error;
-    }
-
-    const batch = (data ?? []) as Application[];
-    all.push(...batch);
-
-    if (batch.length < APPLICATION_API_PAGE_SIZE) {
-      break;
-    }
-    from += APPLICATION_API_PAGE_SIZE;
-  }
-
-  return all;
+      return q.range(offset, offset + POSTGREST_RANGE_WINDOW_MAX);
+    },
+  });
 }
 
 export const applicationQueries = {
@@ -90,34 +100,17 @@ export const applicationQueries = {
    * Get all applications with job details
    */
   async getAll(): Promise<Application[]> {
-    const all: Application[] = [];
-    let from = 0;
-
-    for (;;) {
-      const { data, error } = await supabase
-        .from('applications')
-        .select(`
+    return fetchAllRowsInRangeBatches<Application>({
+      fetchPage: (offset) =>
+        supabase
+          .from('applications')
+          .select(`
         *,
         job:jobs(*)
       `)
-        .order('applied_at', { ascending: false })
-        .range(from, from + APPLICATION_API_PAGE_SIZE - 1);
-
-      if (error) {
-        console.error('Error fetching applications:', error);
-        throw error;
-      }
-
-      const batch = (data ?? []) as Application[];
-      all.push(...batch);
-
-      if (batch.length < APPLICATION_API_PAGE_SIZE) {
-        break;
-      }
-      from += APPLICATION_API_PAGE_SIZE;
-    }
-
-    return all;
+          .order('applied_at', { ascending: false })
+          .range(offset, offset + POSTGREST_RANGE_WINDOW_MAX),
+    });
   },
 
   /**
