@@ -162,6 +162,9 @@ export function ApplicationGridView({ applications: initialApplications, onDelet
       const appAny = app as Record<string, unknown>;
       const job = appAny?.job as Record<string, unknown> | undefined;
 
+      // Synthetic grid column (see position_applied_for ColDef) — not in adminColumns
+      data['Position Applied For'] = String(job?.position ?? '');
+
       adminColumns.forEach(col => {
         if (col.id === 'applied_at') {
           data[col.name] = formatDate(app.applied_at);
